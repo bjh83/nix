@@ -1,0 +1,1 @@
+uenvcmd=mmc rescan;fatload mmc 0:1 0x80300000 init.bin;go 0x80300000

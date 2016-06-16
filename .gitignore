@@ -1,0 +1,7 @@
+*.o
+*.elf
+*.bin
+*.pyc
+
+screenlog.0
+loader/

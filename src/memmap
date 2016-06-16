@@ -1,0 +1,14 @@
+ENTRY(_start)
+
+MEMORY {
+  ram : ORIGIN = 0x80300000, LENGTH = 0x10000
+}
+
+SECTIONS {
+  .text : {
+    boot/entry.o(.text*)
+    *(.text*)
+  } > ram
+  . = . + 0x5000;
+  stack_bottom = .;
+}
