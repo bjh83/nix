@@ -9,6 +9,9 @@ typedef unsigned short  uint16_t;
 typedef int             int32_t;
 typedef unsigned int    uint32_t;
 
+// Represents a raw physical address.
+typedef uint32_t phys_addr_t;
+
 typedef int32_t         bool;
 #define true  1
 #define false 0
