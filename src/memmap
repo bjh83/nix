@@ -9,6 +9,9 @@ SECTIONS {
     boot/entry.o(.text*)
     *(.text*)
   } > ram
+  .data : {
+    *(.data*)
+  } > ram
   . = . + 0x5000;
   stack_bottom = .;
 }

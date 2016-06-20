@@ -5,7 +5,7 @@ OBJCOPY= arm-linux-gnueabi-objcopy
 CFLAGS= -I. -nostdlib -nostartfiles -ffreestanding -std=c99
 
 init.bin: boot/init.o boot/entry.o boot/early_printk.o
-	$(LD) -T memmap boot/entry.o boot/init.o boot/early_printk.o -o init.elf
+	$(LD) -T memmap $^ -o init.elf
 	$(OBJCOPY) init.elf -O binary init.bin
 
 .PHONY: clean
