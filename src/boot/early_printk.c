@@ -6,18 +6,22 @@ static const phys_addr_t debug_uart_lsr_addr = 0x44e09014;
 static const int tx_complete = 1 << 5;
 static const int rx_complete = 1 << 0;
 
-static bool is_tx_complete() {
+static bool is_tx_complete(void) {
   volatile uint32_t* debug_uart_lsr = (volatile uint32_t*) debug_uart_lsr_addr;
 
   return (*debug_uart_lsr & tx_complete) > 0;
 }
 
-static void early_putchar(char c) {
+int early_putchar(char c) {
   volatile uint32_t* debug_uart_tx = (volatile uint32_t*) debug_uart_tx_addr;
 
-  // Wait for TX to become available.
   while (!is_tx_complete());
   *debug_uart_tx = c;
+  if (c == '\n') {
+    while (!is_tx_complete());
+    *debug_uart_tx = '\r';
+  }
+  return 0;
 }
 
 void early_puts(const char* str) {
