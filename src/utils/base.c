@@ -29,6 +29,17 @@ int abs(int value) {
   return value * sign(value);
 }
 
+uint32_t be_to_le(uint32_t big_endian) {
+  uint8_t* big_endian_ptr = (uint8_t*) &big_endian;
+  uint32_t little_endian;
+  uint8_t* little_endian_ptr = (uint8_t *) &little_endian;
+  little_endian_ptr[3] = big_endian_ptr[0];
+  little_endian_ptr[2] = big_endian_ptr[1];
+  little_endian_ptr[1] = big_endian_ptr[2];
+  little_endian_ptr[0] = big_endian_ptr[3];
+  return little_endian;
+}
+
 // Converts a value to a string representation in the specified radix.
 // Assumes base is between 2 and 36.
 // Assumes buf is of length 33 or greater (size required to represent an

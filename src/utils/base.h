@@ -3,10 +3,12 @@
 
 #include "utils/types.h"
 
+extern uint32_t be_to_le(uint32_t big_endian);
+
 extern size_t strlen(const char* str);
 
-int putchar_to_puts(int (*putchar)(char), const char* str);
-int putchar_to_printf(int (*putchar)(char), const char* format, ...);
+extern int putchar_to_puts(int (*putchar)(char), const char* str);
+extern int putchar_to_printf(int (*putchar)(char), const char* format, ...);
 
 // Converts a value to a string representation in the specified radix.
 // Assumes base is between 2 and 36.
