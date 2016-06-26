@@ -126,7 +126,14 @@ int putchar_to_printf(int (*putchar)(char), const char* format, ...) {
           if (ret < 0) {
             goto out;
           }
+          break;
         }
+        case 's':
+          ret = putchar_to_puts(putchar, va_arg(args, char*));
+          if (ret < 0) {
+            goto out;
+          }
+          break;
       }
     } else {
       ret = (putchar)(format[i]);
