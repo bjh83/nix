@@ -14,6 +14,10 @@ typedef uint32_t        size_t;
 // Represents a raw physical address.
 typedef uint32_t phys_addr_t;
 
+// Represents the type of a variable that has no useful type.
+// This is a useful type for linker script variables.
+typedef long notype;
+
 #define NULL 0
 
 typedef int32_t         bool;

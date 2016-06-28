@@ -15,6 +15,31 @@ size_t strlen(const char* str) {
   return size;
 }
 
+void* memcpy(void* destination, const void* source, size_t num) {
+  char* dest = (char*) destination;
+  const char* src = (const char*) source;
+  for (size_t i = 0; i < num; i++) {
+    dest[i] = src[i];
+  }
+  return destination;
+}
+
+void* memset(void* destination, int val, size_t num) {
+  char* dest = (char*) destination;
+  for (size_t i = 0; i < num; i++) {
+    dest[i] = val;
+  }
+  return destination;
+}
+
+int max(int left, int right) {
+  if (left > right) {
+    return left;
+  } else {
+    return right;
+  }
+}
+
 int sign(int value) {
   if (value < 0) {
     return -1;

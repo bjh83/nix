@@ -6,6 +6,9 @@
 extern uint32_t be_to_le(uint32_t big_endian);
 
 extern size_t strlen(const char* str);
+extern void* memcpy(void* destination, const void* source, size_t num);
+extern void* memset(void* destination, int val, size_t num);
+extern int max(int left, int right);
 
 extern int putchar_to_puts(int (*putchar)(char), const char* str);
 extern int putchar_to_printf(int (*putchar)(char), const char* format, ...);

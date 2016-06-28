@@ -6,12 +6,23 @@ MEMORY {
 
 SECTIONS {
   .text : {
-    boot/entry.o(.text*)
-    *(.text*)
+    boot/entry.o(.text)
+    *(.text)
+    *(.rodata)
+    _etext = .;
   } > ram
+
   .data : {
-    *(.data*)
+    _data = .;
+    *(.data)
+    _edata = .;
   } > ram
-  . = . + 0x5000;
-  stack_bottom = .;
+
+  .bss : {
+    __bss_start = .;
+    *(.bss)
+  } > ram
+  . = ALIGN(4);
+  __bss_end = .;
+  __stack_bottom = . + 0x5000;
 }
