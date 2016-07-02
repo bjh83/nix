@@ -12,7 +12,9 @@ typedef int32_t         ssize_t;
 typedef uint32_t        size_t;
 
 // Represents a raw physical address.
-typedef uint32_t phys_addr_t;
+typedef long phys_addr_t;
+// Represents a raw virtual address.
+typedef long virt_addr_t;
 
 // Represents the type of a variable that has no useful type.
 // This is a useful type for linker script variables.

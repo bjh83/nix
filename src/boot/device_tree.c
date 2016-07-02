@@ -161,7 +161,7 @@ static int parse_struct_block(void* struct_block, char* str_block) {
 
 int parse_device_tree(phys_addr_t device_tree_blob) {
   int ret = 0;
-  struct fdt_header* fdt_header = (struct fdt_header*) (long) device_tree_blob;
+  struct fdt_header* fdt_header = (struct fdt_header*) device_tree_blob;
   if (!validate_fdt_header(fdt_header)) {
     return -1;
   }

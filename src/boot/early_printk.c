@@ -6,13 +6,13 @@ static const int tx_complete = 1 << 5;
 static const int rx_complete = 1 << 0;
 
 static bool is_tx_complete(void) {
-  volatile uint32_t* debug_uart_lsr = (volatile uint32_t*) (long) debug_uart_lsr_addr;
+  volatile uint32_t* debug_uart_lsr = (volatile uint32_t*) debug_uart_lsr_addr;
 
   return (*debug_uart_lsr & tx_complete) > 0;
 }
 
 int early_putchar(char c) {
-  volatile uint32_t* debug_uart_tx = (volatile uint32_t*) (long) debug_uart_tx_addr;
+  volatile uint32_t* debug_uart_tx = (volatile uint32_t*) debug_uart_tx_addr;
 
   while (!is_tx_complete());
   *debug_uart_tx = c;
