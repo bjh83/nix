@@ -6,16 +6,17 @@ MEMORY {
 
 SECTIONS {
   .text : {
+    __text_start = .;
     boot/entry.o(.text)
     *(.text)
     *(.rodata)
-    _etext = .;
+    __text_end = .;
   } > ram
 
   .data : {
-    _data = .;
+    __data_start = .;
     *(.data)
-    _edata = .;
+    __data_end = .;
   } > ram
 
   .bss : {
