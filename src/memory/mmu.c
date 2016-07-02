@@ -31,26 +31,28 @@
 
 #define PTAB_TYPE_MASK   (((1 << 2) - 1) << 0)
 #define PTAB_FAULT                          0
-#define PTAB                          (1 << 0)
+#define PTAB_PTAB                     (1 << 0)
 #define PTAB_NOT_EXECUTABLE           (1 << 2)
 #define PTAB_NOT_SECURE               (1 << 3)
 #define PTAB_DOMAIN_MASK (((1 << 4) - 1) << 5)
 #define PTAB_IMPL_DEFN                (1 << 9)
 #define PTAB_SIZE                     (1 << 10)
-#define PTAB_MASK       (~(PAGE_TABLE_SIZE - 1))
-#define PTAB_ADDR(addr) ((addr) & PAGE_TABLE_MASK)
+#define PTAB_MASK       (~(PTAB_SIZE - 1))
+#define PTAB_ADDR(addr) ((addr) & PTAB_MASK)
 
 #define TTAB_INDEX_SIZE     (1 << 12)
 #define TTAB_INDEX_SHIFT          20
-#define TTAB_INDEX(addr) (((addr) & ((TTAB_INDEX_SIZE - 1) << TTAB_INDEX_SHIFT)) >> TTAB_INDEX_SHIFT)
+#define TTAB_INDEX_MASK     (TTAB_INDEX_SIZE - 1)
+#define TTAB_INDEX(addr)    (((addr) & ((TTAB_INDEX_SIZE - 1) << TTAB_INDEX_SHIFT)) >> TTAB_INDEX_SHIFT)
 #define TTAB_ADDR_ALIGNMENT (1 << 14)
-#define TTAB_ADDR_MASK    (~(TTAB_ADDR_ALIGNMENT - 1))
+#define TTAB_ADDR_MASK      (~(TTAB_ADDR_ALIGNMENT - 1))
 #define PTAB_INDEX_SIZE     (1 << 8)
 #define PTAB_INDEX_SHIFT          12
-#define PTAB_INDEX(addr) (((addr) & ((PTAB_INDEX_SIZE - 1) << PTAB_INDEX_SHIFT)) >> PTAB_INDEX_SHIFT)
+#define PTAB_INDEX_MASK     (PTAB_INDEX_SIZE - 1)
+#define PTAB_INDEX(addr)    (((addr) & ((PTAB_INDEX_SIZE - 1) << PTAB_INDEX_SHIFT)) >> PTAB_INDEX_SHIFT)
 #define PTAB_ADDR_ALIGNMENT (1 << 10)
-#define PTAB_ADDR_MASK    (~(PTAB_ADDR_ALIGNMENT - 1))
-#define PAGE_INDEX(addr)  ((addr) & (PAGE_SIZE - 1))
+#define PTAB_ADDR_MASK      (~(PTAB_ADDR_ALIGNMENT - 1))
+#define PAGE_INDEX(addr)    ((addr) & (PAGE_SIZE - 1))
 
 #define TTBR_CACHABLE              (1 << 0)
 #define TTBR_SHARABLE              (1 << 1)
@@ -97,66 +99,124 @@ static phys_addr_t virt_to_phys(virt_addr_t virt) {
   return virt + RAM_START;
 }
 
-extern void __start_mmu(void) __attribute__((aligned(PAGE_SIZE), noreturn));
+extern phys_addr_t __translate_addr(virt_addr_t addr);
+
+extern void __flush_page(virt_addr_t vaddr);
+
+extern void __start_mmu(virt_addr_t post_start_mmu_addr) __attribute__((aligned(PAGE_SIZE), noreturn));
 
 void __post_start_mmu(void) {
+  early_putchar('x');
   early_printk("MMU enabled.\n");
+  early_printk("0x00000000 => %p\n", __translate_addr(0x00000000));
+  early_printk("0x10000000 => %p\n", __translate_addr(0x10000000));
+  early_printk("0x20000000 => %p\n", __translate_addr(0x20000000));
+  early_printk("0x30000000 => %p\n", __translate_addr(0x30000000));
+  early_printk("0x40000000 => %p\n", __translate_addr(0x40000000));
+  early_printk("0x50000000 => %p\n", __translate_addr(0x50000000));
+  early_printk("0x60000000 => %p\n", __translate_addr(0x60000000));
+  early_printk("0x70000000 => %p\n", __translate_addr(0x70000000));
+  early_printk("0x80000000 => %p\n", __translate_addr(0x80000000));
+  early_printk("0x90000000 => %p\n", __translate_addr(0x90000000));
+  early_printk("0xa0000000 => %p\n", __translate_addr(0xa0000000));
+  early_printk("0xb0000000 => %p\n", __translate_addr(0xb0000000));
+  early_printk("0xc0000000 => %p\n", __translate_addr(0xc0000000));
+  early_printk("0xd0000000 => %p\n", __translate_addr(0xd0000000));
+  early_printk("0xe0000000 => %p\n", __translate_addr(0xe0000000));
+  early_printk("0xf0000000 => %p\n", __translate_addr(0xf0000000));
+  phys_addr_t start_mmu_paddr = PAGE_ADDR((phys_addr_t) (long) __start_mmu);
+  virt_addr_t start_mmu_vaddr = phys_to_virt(start_mmu_paddr);
+  early_printk("%p => %p\n", start_mmu_paddr, __translate_addr(start_mmu_paddr)); 
+  early_printk("%p => %p\n", start_mmu_vaddr, __translate_addr(start_mmu_vaddr));
+  early_printk("New address of __post_start_mmu is %p\n", __post_start_mmu);
   while (true);
 }
 
-static int flat_remap_paddr(page_entry_t** kernel_ttab, const void* ptr) {
+typedef long tran_table_t;
+typedef long page_table_t;
+
+static page_table_t early_get_page_table(tran_table_t ttab, uint32_t index) {
+  phys_addr_t phys = (ttab & TTAB_ADDR_MASK) | ((index & TTAB_INDEX_MASK) << 2);
+  return *((page_table_t*) (long) phys);
+}
+
+static void early_set_page_table(tran_table_t ttab, uint32_t index, page_table_t ptab) {
+  phys_addr_t phys = (ttab & TTAB_ADDR_MASK) | ((index & TTAB_INDEX_MASK) << 2);
+  *((page_table_t*) (long) (phys)) = ptab;
+  // early_printk("Asigning page table %p to %p\n", ptab, phys);
+}
+
+static page_entry_t early_get_page_entry(page_table_t ptab, uint32_t index) {
+  phys_addr_t phys = (ptab & PTAB_ADDR_MASK) | ((index & PTAB_INDEX_MASK) << 2);
+  return *((page_entry_t*) (long) phys);
+}
+
+static void early_set_page_entry(page_table_t ptab, uint32_t index, page_entry_t pentry) {
+  phys_addr_t phys = (ptab & PTAB_ADDR_MASK) | ((index & PTAB_INDEX_MASK) << 2);
+  *((page_entry_t*) (long) phys) = pentry;
+  // early_printk("Asigning page entry %p to %p\n", pentry, phys);
+}
+
+static int flat_remap_paddr(tran_table_t ttab, const void* ptr) {
   phys_addr_t paddr = (phys_addr_t) (long) ptr;
-  page_entry_t* ptab = kernel_ttab[TTAB_INDEX(paddr)];
-  if (!ptab) {
-    // Create page table.
-    kernel_ttab[TTAB_INDEX(paddr)] = (page_entry_t*) early_mmu_malloc(PTAB_INDEX_SIZE, PTAB_ADDR_ALIGNMENT);
-    ptab = kernel_ttab[TTAB_INDEX(paddr)];
-    // Mark all pages as faults.
-    memset(ptab, PAGE_FAULT, PTAB_INDEX_SIZE);
+  page_table_t ptab = early_get_page_table(ttab, TTAB_INDEX(paddr));
+  if (ptab == PTAB_FAULT) {
+    phys_addr_t ptab_addr = (phys_addr_t) (long) early_mmu_malloc(PTAB_INDEX_SIZE * sizeof(page_table_t), PTAB_ADDR_ALIGNMENT);
+    ptab = PTAB_ADDR(ptab_addr) | PTAB_PTAB;
+    early_set_page_table(ttab, TTAB_INDEX(paddr), ptab);
+    for (uint32_t i = 0; i < PTAB_INDEX_SIZE; i++) {
+      early_set_page_entry(ptab, i, PAGE_FAULT);
+    }
   }
-  // Add mapping for ptr.
-  ptab[PTAB_INDEX(paddr)] = PAGE_ADDR(paddr) | PAGE_SMALL;
+  page_entry_t page_entry = PAGE_ADDR(paddr) | PAGE_SHARABLE | PAGE_SMALL;
+  early_set_page_entry(ptab, PTAB_INDEX(paddr), page_entry);
   return 0;
 }
 
 phys_addr_t kernel_ttab_paddr;
 
 static int alloc_kernel_ttab(void) {
-  size_t kernel_ttab_size = TTAB_INDEX_SIZE * sizeof(page_entry_t*);
-  page_entry_t** kernel_ttab = (page_entry_t**) early_mmu_malloc(kernel_ttab_size, TTAB_ADDR_ALIGNMENT);
-  early_printk("Created TTBR0 at: %p\n", kernel_ttab);
-  memset(kernel_ttab, 0, kernel_ttab_size);
-  for (size_t ttab_idx = TTAB_INDEX(0); ttab_idx < TTAB_INDEX(RAM_SIZE); ttab_idx++) {
-    size_t ptab_size = PTAB_INDEX_SIZE * sizeof(page_entry_t);
-    page_entry_t* ptab = (page_entry_t*) early_mmu_malloc(ptab_size, PTAB_ADDR_ALIGNMENT);
-    for (size_t ptab_idx = 0; ptab_idx < PTAB_INDEX_SIZE; ptab_idx++) {
-      virt_addr_t page_addr = (ttab_idx << TTAB_INDEX_SHIFT) | (ptab_idx << PTAB_INDEX_SHIFT);
-      page_entry_t page_entry = page_addr | PAGE_SMALL;
-      ptab[ptab_idx] = page_entry;
-    }
-    kernel_ttab[ttab_idx] = ptab;
+  size_t ttab_size = TTAB_INDEX_SIZE * sizeof(page_entry_t*);
+  tran_table_t ttab = (tran_table_t) (long) early_mmu_malloc(ttab_size, TTAB_ADDR_ALIGNMENT);
+  early_printk("Created TTBR0 at: %p\n", ttab);
+  for (uint32_t i = 0; i < TTAB_INDEX_SIZE; i++) {
+    early_set_page_table(ttab, i, PTAB_FAULT);
   }
-  kernel_ttab_paddr = (phys_addr_t) (long) kernel_ttab;
+
+  for (uint32_t ptab_idx = TTAB_INDEX(0); ptab_idx < TTAB_INDEX(RAM_SIZE); ptab_idx++) {
+    size_t ptab_size = PTAB_INDEX_SIZE * sizeof(page_entry_t);
+    page_table_t ptab = (page_table_t) (long) early_mmu_malloc(ptab_size, PTAB_ADDR_ALIGNMENT);
+    for (uint32_t page_idx = 0; page_idx < PTAB_INDEX_SIZE; page_idx++) {
+      virt_addr_t page_addr = virt_to_phys((ptab_idx << TTAB_INDEX_SHIFT) | (page_idx << PTAB_INDEX_SHIFT));
+      page_entry_t page_entry = page_addr | PAGE_SMALL;
+      early_set_page_entry(ptab, page_idx, page_entry);
+    }
+    early_set_page_table(ttab, ptab_idx, ptab | PTAB_PTAB);
+  }
+  kernel_ttab_paddr = (phys_addr_t) ttab;
 
   // We need to create a flat mapping for __start_mmu since it will turn on the
   // MMU causing the addressing to change from physical to virtual in the middle
   // of the function.
-  // flat_remap_paddr(kernel_ttab, (void*) __start_mmu);
+  flat_remap_paddr(ttab, (void*) __start_mmu);
+  flat_remap_paddr(ttab, (void*) __post_start_mmu);
   // We need to create a flat mapping for the UART ports until we set up a
   // proper driver for them.
-  flat_remap_paddr(kernel_ttab, (void*) (long) debug_uart_tx_addr);
-  flat_remap_paddr(kernel_ttab, (void*) (long) debug_uart_lsr_addr);
+  flat_remap_paddr(ttab, (void*) (long) debug_uart_tx_addr);
+  flat_remap_paddr(ttab, (void*) (long) debug_uart_lsr_addr);
+  flat_remap_paddr(ttab, &__stack_bottom);
   return 0;
 }
 
 extern void __set_ttbr0(uint32_t new_ttbr0);
 extern void __set_ttbcr(uint32_t new_ttbcr);
+extern void __set_dacr(uint32_t new_dacr);
 
 static void init_mmu_registers(void) {
   __set_ttbr0((kernel_ttab_paddr & TTBR_TTAB_MASK) | TTBR_SHARABLE);
-  __set_ttbcr(TTBCR_PD0 | TTBCR_USE_TTBR0);
+  __set_ttbcr(TTBCR_PD1 | TTBCR_USE_TTBR0);
+  __set_dacr(0x00000003);
 }
-
 
 void init_mmu(void) __attribute__((noreturn));
 
@@ -170,5 +230,8 @@ void init_mmu(void) {
   }
   init_mmu_registers();
 
-  __start_mmu();
+  virt_addr_t post_start_mmu_vaddr = phys_to_virt((phys_addr_t) (long) __post_start_mmu);
+  early_printk("__post_start_mmu paddr is %p\n", __post_start_mmu);
+  early_printk("__post_start_mmu vaddr is %p\n", post_start_mmu_vaddr);
+  __start_mmu(post_start_mmu_vaddr); // (phys_addr_t) (long) __post_start_mmu);
 }
