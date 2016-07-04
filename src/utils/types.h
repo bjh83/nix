@@ -1,6 +1,9 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+// Denotes that a function is defined in an assembly file.
+#define __asm_def
+
 // Basic types.
 typedef char            int8_t;
 typedef unsigned char   uint8_t;

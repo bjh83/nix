@@ -1,6 +1,8 @@
 #ifndef MEMORY_MMU_H_
 #define MEMORY_MMU_H_
 
+#include "utils/types.h"
+
 #define RAM_START 0x80000000
 #define RAM_SIZE  0x20000000
 #define RAM_END   (RAM_START + RAM_SIZE)
@@ -60,5 +62,53 @@
 #define TTBCR_USE_TTBR0                  0
 #define TTBCR_PD0                  (1 << 4)
 #define TTBCR_PD1                  (1 << 5)
+
+typedef long tran_table_t;
+typedef long page_table_t;
+typedef uint32_t page_entry_t;
+
+extern phys_addr_t kernel_ttab_paddr;
+
+inline virt_addr_t phys_to_virt(phys_addr_t phys) {
+  return phys - RAM_START;
+}
+
+inline phys_addr_t virt_to_phys(virt_addr_t virt) {
+  return virt + RAM_START;
+}
+
+inline page_table_t get_page_table(tran_table_t ttab, uint32_t index) {
+  phys_addr_t phys = (ttab & TTAB_ADDR_MASK) | ((index & TTAB_INDEX_MASK) << 2);
+  virt_addr_t virt = phys_to_virt(phys);
+  return *((page_table_t*) virt);
+}
+
+inline void set_page_table(tran_table_t ttab, uint32_t index, page_table_t ptab) {
+  phys_addr_t phys = (ttab & TTAB_ADDR_MASK) | ((index & TTAB_INDEX_MASK) << 2);
+  virt_addr_t virt = phys_to_virt(phys);
+  *((page_table_t*) virt) = ptab;
+}
+
+inline page_entry_t get_page_entry(page_table_t ptab, uint32_t index) {
+  phys_addr_t phys = (ptab & PTAB_ADDR_MASK) | ((index & PTAB_INDEX_MASK) << 2);
+  virt_addr_t virt = phys_to_virt(phys);
+  return *((page_entry_t*) virt);
+}
+
+inline void set_page_entry(page_table_t ptab, uint32_t index, page_entry_t entry) {
+  phys_addr_t phys = (ptab & PTAB_ADDR_MASK) | ((index & PTAB_INDEX_MASK) << 2);
+  virt_addr_t virt = phys_to_virt(phys);
+  *((page_table_t*) virt) = entry;
+}
+
+extern page_entry_t lookup_page(tran_table_t ttab, void* page_addr);
+
+extern phys_addr_t  __asm_def __translate_addr(virt_addr_t addr);
+
+extern void __asm_def __flush_page(virt_addr_t vaddr);
+
+extern void __asm_def __set_ttbr0(uint32_t new_ttbr0);
+extern void __asm_def __set_ttbcr(uint32_t new_ttbcr);
+extern void __asm_def __set_dacr(uint32_t new_dacr);
 
 #endif // MEMORY_MMU_H_
