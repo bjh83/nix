@@ -4,24 +4,28 @@
 #include "utils/errno.h"
 #include "utils/types.h"
 
-inline void* ERR_PTR(long err) {
+static inline void* ERR_PTR(long err) {
   return (void*) err;
 }
 
-inline long PTR_ERR(const void* ptr) {
+static inline long PTR_ERR(const void* ptr) {
   return (long) ptr;
 }
 
-inline bool IS_ERR(const void* ptr) {
-  return PTR_ERR(ptr) >= -MAX_ERRNO;
+static inline bool IS_ERR(long err) {
+  return err >= -MAX_ERRNO;
 }
 
-inline bool IS_NULL_OR_ERR(const void* ptr) {
-  return !ptr || IS_ERR(ptr);
+static inline bool IS_PTR_ERR(const void* ptr) {
+  return IS_ERR(PTR_ERR(ptr));
 }
 
-int ZERO_OR_ERR(const void* ptr) {
-  if (IS_ERR(ptr)) {
+static inline bool IS_NULL_OR_ERR(const void* ptr) {
+  return !ptr || IS_PTR_ERR(ptr);
+}
+
+static inline int ZERO_OR_ERR(const void* ptr) {
+  if (IS_PTR_ERR(ptr)) {
     return PTR_ERR(ptr);
   } else {
     return 0;

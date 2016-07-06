@@ -10,20 +10,25 @@ SECTIONS {
     boot/entry.o(.text)
     *(.text)
     *(.rodata)
+    . = ALIGN(4096);
     __text_end = .;
   } > ram
 
   .data : {
     __data_start = .;
     *(.data)
+    . = ALIGN(4096);
     __data_end = .;
   } > ram
 
   .bss : {
     __bss_start = .;
     *(.bss)
+    . = ALIGN(4096);
   } > ram
-  . = ALIGN(4);
+    . = ALIGN(4096);
   __bss_end = .;
-  __stack_bottom = . + 0x5000;
+  . = . + 0x4096;
+  . = ALIGN(4096);
+  __stack_bottom = .;
 }

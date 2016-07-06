@@ -99,6 +99,10 @@ static void init_mmu_registers(void) {
 
 void __post_start_mmu(void) {
   early_printk("MMU enabled.\n");
+
+  flush_mem(__va(0x00000000), 0x00400000);
+  ((int (*)(char))__va((phys_addr_t) early_putchar))('x');
+
   early_printk("0x00000000 => %p\n", __translate_addr(0x00000000));
   early_printk("0x10000000 => %p\n", __translate_addr(0x10000000));
   early_printk("0x20000000 => %p\n", __translate_addr(0x20000000));
@@ -136,8 +140,8 @@ void init_mmu(void) {
   init_mmu_registers();
 
   virt_addr_t post_start_mmu_vaddr = phys_to_virt((phys_addr_t) __post_start_mmu);
-  virt_addr_t stack_bottom_addr = phys_to_virt((phys_addr_t) &__stack_bottom);
+  virt_addr_t stack_bottom_vaddr = phys_to_virt((phys_addr_t) &__stack_bottom);
   early_printk("__post_start_mmu paddr is %p\n", __post_start_mmu);
   early_printk("__post_start_mmu vaddr is %p\n", post_start_mmu_vaddr);
-  __start_mmu(post_start_mmu_vaddr, stack_bottom_addr);
+  __start_mmu(post_start_mmu_vaddr, stack_bottom_vaddr);
 }

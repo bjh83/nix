@@ -19,7 +19,10 @@
 #define PAGE_C                              (1 << 3)
 #define PAGE_AP_MASK           (((1 << 2) - 1) << 4)
 #define PAGE_TEX_MASK          (((1 << 3) - 1) << 6)
+#define PAGE_TEXCB_WRITE_NO_ALLOC  (PAGE_B | PAGE_C)
 #define PAGE_AP_2                           (1 << 9)
+#define PAGE_AP_RW_PL1                            0
+#define PAGE_AP_RO_PL1                      (1 << 9)
 #define PAGE_SHARABLE                       (1 << 10)
 #define PAGE_NOT_GLOBAL                     (1 << 11)
 #define PAGE_SIZE                           (1 << 12)
@@ -69,43 +72,53 @@ typedef uint32_t page_entry_t;
 
 extern phys_addr_t kernel_ttab_paddr;
 
-inline virt_addr_t phys_to_virt(phys_addr_t phys) {
+static inline virt_addr_t phys_to_virt(phys_addr_t phys) {
   return phys - RAM_START;
 }
 
-inline phys_addr_t virt_to_phys(virt_addr_t virt) {
+static inline phys_addr_t virt_to_phys(virt_addr_t virt) {
   return virt + RAM_START;
 }
 
-inline page_table_t get_page_table(tran_table_t ttab, uint32_t index) {
+static inline void* __va(phys_addr_t paddr) {
+  return (void*) phys_to_virt(paddr);
+}
+
+static inline page_table_t get_page_table(tran_table_t ttab, uint32_t index) {
   phys_addr_t phys = (ttab & TTAB_ADDR_MASK) | ((index & TTAB_INDEX_MASK) << 2);
   virt_addr_t virt = phys_to_virt(phys);
   return *((page_table_t*) virt);
 }
 
-inline void set_page_table(tran_table_t ttab, uint32_t index, page_table_t ptab) {
+static inline void set_page_table(tran_table_t ttab, uint32_t index, page_table_t ptab) {
   phys_addr_t phys = (ttab & TTAB_ADDR_MASK) | ((index & TTAB_INDEX_MASK) << 2);
   virt_addr_t virt = phys_to_virt(phys);
   *((page_table_t*) virt) = ptab;
 }
 
-inline page_entry_t get_page_entry(page_table_t ptab, uint32_t index) {
+static inline page_entry_t get_page_entry(page_table_t ptab, uint32_t index) {
   phys_addr_t phys = (ptab & PTAB_ADDR_MASK) | ((index & PTAB_INDEX_MASK) << 2);
   virt_addr_t virt = phys_to_virt(phys);
   return *((page_entry_t*) virt);
 }
 
-inline void set_page_entry(page_table_t ptab, uint32_t index, page_entry_t entry) {
+static inline void set_page_entry(page_table_t ptab, uint32_t index, page_entry_t entry) {
   phys_addr_t phys = (ptab & PTAB_ADDR_MASK) | ((index & PTAB_INDEX_MASK) << 2);
   virt_addr_t virt = phys_to_virt(phys);
   *((page_table_t*) virt) = entry;
 }
 
 extern page_entry_t lookup_page(tran_table_t ttab, void* page_addr);
+extern int assign_page(tran_table_t ttab, void* page_addr, page_entry_t page_entry);
+extern void flush_mem(void* mem, size_t size);
 
 extern phys_addr_t  __asm_def __translate_addr(virt_addr_t addr);
 
 extern void __asm_def __flush_page(virt_addr_t vaddr);
+
+static inline void flush_page(virt_addr_t vaddr) {
+  __flush_page(vaddr);
+}
 
 extern void __asm_def __set_ttbr0(uint32_t new_ttbr0);
 extern void __asm_def __set_ttbcr(uint32_t new_ttbcr);
