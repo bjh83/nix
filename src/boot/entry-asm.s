@@ -84,4 +84,6 @@ addr_space_jump:
   isb                       @ Synchronize instructions.
   @ ldr sp, =__stack_bottom
   @ mov lr, sp
-  blx __kernel_start          @ Branch to new address space.
+  mov r0, #0x00300000
+  add r0, r0, #0x00001000   @ Load 0x00301000 into r0.
+  bx r0                     @ Branch to kernel.
