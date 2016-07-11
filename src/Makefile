@@ -7,7 +7,7 @@ CFLAGS= -I. -nostdlib -nostartfiles -ffreestanding -fno-common -static -fPIC -ma
 
 ENTRY_OBJS= boot/entry-asm.o boot/entry.o
 
-OBJS= boot/kernel-start.o \
+OBJS= boot/kernel-start-asm.o boot/kernel-start.o \
 			boot/early_printk.o \
 			utils/base.o utils/base-asm.o \
 #			memory/mmu.o memory/mmu-asm.o memory/mmap.o
