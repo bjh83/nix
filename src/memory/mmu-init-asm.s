@@ -1,4 +1,4 @@
-.text
+.premmu.text
 
 /*
  * Turns on MMU and jumps to new address space.

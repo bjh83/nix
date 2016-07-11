@@ -4,6 +4,14 @@
 // Denotes that a function is defined in an assembly file.
 #define __asm_def
 
+// Denotes that an object goes in a non-standard section.
+#define __section(section) __attribute__((__section__(section)))
+
+// Denotes that a function goes in a pre-mmu-initialized text section.
+#define __pre_mmu __section(".premmu.text")
+
+#define __pre_mmu_data __section(".premmu.data")
+
 // Basic types.
 typedef char            int8_t;
 typedef unsigned char   uint8_t;

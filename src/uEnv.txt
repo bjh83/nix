@@ -1,1 +1,1 @@
-uenvcmd=mmc rescan;fatload mmc 0:1 0x80300000 init.bin;load mmc 1:1 0x88000000 /dtbs/am335x-boneblack.dtb;go 0x80300000
+uenvcmd=mmc rescan;fatload mmc 0:1 0x80300000 sys.bin;load mmc 1:1 0x88000000 /dtbs/am335x-boneblack.dtb;go 0x80300000
