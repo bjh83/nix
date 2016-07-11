@@ -1,6 +1,7 @@
 *.o
 *.elf
 *.bin
+*.dump
 *.pyc
 
 screenlog.0
