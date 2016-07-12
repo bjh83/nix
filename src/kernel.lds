@@ -22,11 +22,6 @@ SECTIONS {
     __bss_start = .;
     *(.bss)
     . = ALIGN(4096);
-  }
-
-    . = ALIGN(4096);
   __bss_end = .;
-  . = . + 0x4096;
-  . = ALIGN(4096);
-  __stack_bottom = .;
+  }
 }
