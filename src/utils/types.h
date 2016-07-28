@@ -27,6 +27,8 @@ typedef long phys_addr_t;
 // Represents a raw virtual address.
 typedef long virt_addr_t;
 
+#define INVALID_PADDR 0xffffffff
+
 // Represents the type of a variable that has no useful type.
 // This is a useful type for linker script variables.
 typedef long notype;

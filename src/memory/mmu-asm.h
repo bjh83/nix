@@ -7,6 +7,11 @@
 #define RAM_SIZE  0x20000000
 #define RAM_END   (RAM_START + RAM_SIZE)
 
+#define STACK_SIZE 0x5000
+
+#define KERNEL_TTAB_PADDR 0x80305000
+
+#define PAGE_SHIFT                                12
 #define PAGE_SIZE                           (1 << 12)
 #define PAGE_MASK                   (~(PAGE_SIZE - 1))
 #define PAGE_ADDR(addr)             ((addr) & PAGE_MASK)
@@ -19,6 +24,7 @@
 #define PAGE_C                              (1 << 3)
 #define PAGE_AP_MASK           (((1 << 2) - 1) << 4)
 #define PAGE_TEX_MASK          (((1 << 3) - 1) << 6)
+#define PAGE_TEXCB_DEVICE                   (PAGE_B)
 #define PAGE_TEXCB_WRITE_NO_ALLOC  (PAGE_B | PAGE_C)
 #define PAGE_AP_2                           (1 << 9)
 #define PAGE_AP_RW_PL1                            0
