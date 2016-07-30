@@ -10,7 +10,7 @@ other platforms is *feasible*.
 ## Evironment Setup
 TODO(diego): discuss how to set up build environment.
 
-## Building
+## Building and Installing
 From within the `src` directory:
 
 ```
@@ -20,8 +20,16 @@ $ make
 This builds several things, but most importantly `sys.bin` which has the kernel
 image in it.
 
-TODO(brendan): discuss how to format a flash card that `sys.bin` can be booted
-from.
+You will need an empty, fat32 formatted micro SD card with the following files
+copied to it:
+
+ - http://downloads.angstrom-distribution.org/demo/beagleboard/MLO
+ - http://downloads.angstrom-distribution.org/demo/beagleboard/u-boot.img
+ - http://downloads.angstrom-distribution.org/demo/beagleboard/uImage-beagleboard.bin
+
+Now copy `uEnv.txt` and `sys.bin` to the SD card.
+
+And that's it!
 
 ## Boot Image Format
 The boot image `sys.bin` can be broken into two parts: the entry section, and
