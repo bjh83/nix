@@ -8,7 +8,25 @@ platforms. Nevertheless, code should be written in such a way that porting to
 other platforms is *feasible*.
 
 ## Evironment Setup
-TODO(diego): discuss how to set up build environment.
+### Linux
+Download the ARM cross-compiler toolchain:
+ 1. Install the ARM cross-compiler toolchain:
+  - `$ sudo apt-get install gcc-arm-linux-gnueabi`
+
+### MacOS
+
+1. Download and install the ARM cross-compiler toolchain:
+ - http://www.welzels.de/blog/download/gcc-linaro-arm-linux-gnueabihf-2014.05_mac.zip
+
+2. Add `/usr/local/linaro/arm-linux-gnueabihf/bin` to your `$PATH`
+3. These binaries have "hf" in the name which you will need to remove. Here is a one-liner to do so:
+
+ ```
+  $ cd /usr/local/linaro/arm-linux-gnueabihf/bin
+  $ for i in $(ls); do sudo mv $i $(echo $i | sed "s/\(arm.*\)hf\(-.*\)/\1\2/"); done
+ ```
+
+4. Lastly, from within the `src` directory, edit the `Makefile` and change the `GETSIZE` variable to `stat -f "%z"`
 
 ## Building and Installing
 From within the `src` directory:
