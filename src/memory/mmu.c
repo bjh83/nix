@@ -214,6 +214,16 @@ extern notype __bss_end;
 
 int init_mmu(void) {
   early_printk("init_mmu ...\n");
+  __disable_irqs();
+  early_printk("0x44e09000 => %p\n", __translate_addr(0x44e09000));
+  for (virt_addr_t page = 0; page < RAM_START + RAM_SIZE; page += PAGE_SIZE) {
+    if ((page >> 20) << 20 == page) {
+      early_printk("flushing page %p\n", page);
+    }
+    if (!(0x44e00000 <= page && page <= 0x44f00000) || true) {
+      __flush_page(page);
+    }
+  }
   {
     kernel_ttab = __get_ttbr0();
     phys_addr_t last_ram_paddr = RAM_SIZE - 1;
@@ -223,18 +233,29 @@ int init_mmu(void) {
     early_printk("next_alloc_addr = %p\n", next_alloc_addr);
   }
 
+  early_printk("creating alloc_ttab ...\n");
+
   alloc_ttab = early_mmu_malloc(sizeof(page_table_t) * TTAB_INDEX_SIZE, TTAB_ADDR_ALIGNMENT) & TTAB_ADDR_MASK;
   for (uint32_t i = 0; i < TTAB_INDEX_SIZE; i++) {
     set_page_table(alloc_ttab, i, PTAB_FAULT);
   }
 
   for (uint32_t ptab_idx = TTAB_INDEX(RAM_START); ptab_idx < TTAB_INDEX(RAM_START + RAM_SIZE); ptab_idx++) {
+    early_printk("creating ptab at %d\n", ptab_idx);
     page_table_t ptab = early_mmu_malloc(sizeof(page_entry_t) * PTAB_INDEX_SIZE, PTAB_ADDR_ALIGNMENT) & PTAB_ADDR_MASK;
+    __flush_page(phys_to_virt(ptab));
+    early_printk("populating ptab at %d, ptab = %p\n", ptab_idx, ptab);
     for (uint32_t page_idx = 0; page_idx < PTAB_INDEX_SIZE; page_idx++) {
+      if (ptab_idx == 2080) {
+        early_printk("populating page entry at %d\n", page_idx);
+      }
       set_page_entry(ptab, page_idx, 0);
     }
+    early_printk("populating ptab at %d complete\n", ptab_idx);
     set_page_table(alloc_ttab, ptab_idx, ptab | PTAB_PTAB);
+    early_printk("populating alloc_ttab at %d\n", ptab_idx);
   }
+  early_printk("alloced alloc_ttab ...\n");
 
   {
     phys_addr_t kernel_ttab_paddr = kernel_ttab & TTAB_ADDR_MASK;
@@ -247,6 +268,7 @@ int init_mmu(void) {
       }
     }
   }
+  early_printk("reserved kernel_ttab memory\n");
   {
     phys_addr_t alloc_ttab_paddr = alloc_ttab & TTAB_ADDR_MASK;
     mmu_reserve_block(__va(alloc_ttab_paddr), __va(alloc_ttab_paddr + TTAB_INDEX_SIZE + 1), MEM_DATA_NORMAL);
@@ -259,10 +281,14 @@ int init_mmu(void) {
     }
   }
 
+  early_printk("About to reserve memory.\n");
+
   mmu_reserve_block((void*) (((virt_addr_t) &__text_start) - STACK_SIZE), &__text_start, MEM_DATA_NORMAL);
   mmu_reserve_block(&__text_start, &__text_end, MEM_EXEC_NORMAL);
   mmu_reserve_block(&__data_start, &__data_end, MEM_DATA_NORMAL);
   mmu_reserve_block(&__bss_start, &__bss_end, MEM_DATA_NORMAL);
+
+  early_printk("About to reap unused memory.\n");
 
   mmu_reap_unused();
 
