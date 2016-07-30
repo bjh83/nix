@@ -7,6 +7,9 @@ currently and is too early in development to really start thinking about other
 platforms. Nevertheless, code should be written in such a way that porting to
 other platforms is *feasible*.
 
+## Evironment Setup
+TODO(diego): discuss how to set up build environment.
+
 ## Building
 From within the `src` directory:
 
