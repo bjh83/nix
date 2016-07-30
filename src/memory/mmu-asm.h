@@ -9,8 +9,6 @@
 
 #define STACK_SIZE 0x5000
 
-#define KERNEL_TTAB_PADDR 0x80305000
-
 #define PAGE_SHIFT                                12
 #define PAGE_SIZE                           (1 << 12)
 #define PAGE_MASK                   (~(PAGE_SIZE - 1))

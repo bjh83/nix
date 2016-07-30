@@ -52,7 +52,7 @@ static inline void set_page_entry(page_table_t ptab, uint32_t index, page_entry_
   *((page_table_t*) virt) = entry;
 }
 
-extern const tran_table_t kernel_ttab;
+extern tran_table_t kernel_ttab;
 
 extern page_entry_t lookup_page(tran_table_t ttab, void* page_addr);
 extern int assign_page(tran_table_t ttab, void* page_addr, page_entry_t page_entry);
@@ -71,7 +71,9 @@ static inline void flush_page(virt_addr_t vaddr) {
 }
 
 extern void __asm_def __set_ttbr0(uint32_t new_ttbr0);
+extern phys_addr_t __asm_def __get_ttbr0(void);
 extern void __asm_def __set_ttbcr(uint32_t new_ttbcr);
 extern void __asm_def __set_dacr(uint32_t new_dacr);
+extern void __asm_def __disable_irqs(void);
 
 #endif // MEMORY_MMU_H_

@@ -5,7 +5,7 @@
 
 #include "boot/early_printk.h"
 
-const tran_table_t kernel_ttab = KERNEL_TTAB_PADDR;
+tran_table_t kernel_ttab;
 
 #define PTAB_FULL PTAB_TYPE_MASK
 
@@ -215,13 +215,13 @@ extern notype __bss_end;
 int init_mmu(void) {
   early_printk("init_mmu ...\n");
   {
-    phys_addr_t last_ram_paddr = RAM_START + RAM_SIZE - 1;
+    kernel_ttab = __get_ttbr0();
+    phys_addr_t last_ram_paddr = RAM_SIZE - 1;
     page_table_t ptab = get_page_table(kernel_ttab, TTAB_INDEX(last_ram_paddr));
     phys_addr_t last_used_addr = (ptab & PTAB_ADDR_MASK);
-    next_alloc_addr = last_used_addr + PTAB_INDEX_SIZE;
+    next_alloc_addr = last_used_addr + PTAB_SIZE;
+    early_printk("next_alloc_addr = %p\n", next_alloc_addr);
   }
-
-  early_printk("creating alloc_ttab ...\n");
 
   alloc_ttab = early_mmu_malloc(sizeof(page_table_t) * TTAB_INDEX_SIZE, TTAB_ADDR_ALIGNMENT) & TTAB_ADDR_MASK;
   for (uint32_t i = 0; i < TTAB_INDEX_SIZE; i++) {
@@ -259,14 +259,10 @@ int init_mmu(void) {
     }
   }
 
-  early_printk("About to reserve memory.\n");
-
   mmu_reserve_block((void*) (((virt_addr_t) &__text_start) - STACK_SIZE), &__text_start, MEM_DATA_NORMAL);
   mmu_reserve_block(&__text_start, &__text_end, MEM_EXEC_NORMAL);
   mmu_reserve_block(&__data_start, &__data_end, MEM_DATA_NORMAL);
   mmu_reserve_block(&__bss_start, &__bss_end, MEM_DATA_NORMAL);
-
-  early_printk("About to reap unused memory.\n");
 
   mmu_reap_unused();
 

@@ -13,6 +13,18 @@ __set_ttbr0:
   ldmfd	sp!, {fp, pc}
 
 /*
+ * Gets value in ttbr0 (translation table register 0) register.
+ *
+ * returns:
+ * value in ttbr0 register.
+ */
+.globl __get_ttbr0
+__get_ttbr0:
+  stmfd	sp!, {fp, lr}
+  mrc p15, 0, r0, c2, c0, 0 @ Put ttbr0 in r0.
+  ldmfd	sp!, {fp, pc}
+
+/*
  * Sets ttbcr (translation table control register) register.
  *
  * params:
@@ -61,3 +73,10 @@ __flush_page:
   mcr p15, 0, r0, c8, c7, 1 @ Request invalidation of virtual address in r0.
   ldmfd	sp!, {fp, pc}
 
+.globl __disable_irqs
+__disable_irqs:
+  stmfd	sp!, {fp, lr}
+  mrs r0, cpsr
+  orr r0, r0, #0x1C0
+  msr cpsr, r0
+  ldmfd	sp!, {fp, pc}
