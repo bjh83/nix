@@ -3,6 +3,7 @@
 *.bin
 *.dump
 *.pyc
+*.swp
+*screenlog.0
 
-screenlog.0
 loader/
