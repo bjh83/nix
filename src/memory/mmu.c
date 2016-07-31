@@ -5,6 +5,25 @@
 
 #include "boot/early_printk.h"
 
+#define MMU_SCTLR_L1_INSTR_EN          (1 << 12)
+#define MMU_SCTLR_L1_DATA_EN           (1 << 2)
+
+#define MMU_ACTLR_L2_EN                (1 << 1)
+
+#define MMU_L2_RAM_MUX                 (1 << 29)
+#define MMU_L2_DATA_FORWARD_DE         (1 << 27)
+#define MMU_L2_WR_COMBINE_DE           (1 << 25)
+#define MMU_L2_WR_ALLOC_DELAY_DE       (1 << 24)
+#define MMU_L2_WR_ALLOC_COMBINE_DE     (1 << 23)
+#define MMU_L2_WR_ALLOC_DE             (1 << 22)
+#define MMU_L2_PARITY_ECC_EN           (1 << 21)
+#define MMU_L2_INNER_CACHE             (1 << 16)
+#define MMU_L2_TAG_RAM_LATENCY_MASK  (((1 << 4) - 1) << 6)
+#define MMU_L2_DATA_RAM_LATENCY_MASK (((1 << 5) - 1) << 0)
+
+#define MMU_L2_TAG_RAM_LATENCY         (0x7 << 6)
+#define MMU_L2_DATA_RAM_LATENCY         0xf
+
 tran_table_t kernel_ttab;
 
 #define PTAB_FULL PTAB_TYPE_MASK
@@ -205,6 +224,44 @@ static int mmu_reap_unused(void) {
   return 0;
 }
 
+static void init_l2_cache_actlr(void) {
+  uint32_t l2_cache_actlr = __get_l2_cache_actlr();
+  early_printk("l2_cache_actlr = %p\n", l2_cache_actlr);
+  l2_cache_actlr &= ~(MMU_L2_RAM_MUX | MMU_L2_PARITY_ECC_EN | MMU_L2_INNER_CACHE);
+  l2_cache_actlr |= MMU_L2_DATA_FORWARD_DE
+                  | MMU_L2_WR_COMBINE_DE
+                  | MMU_L2_WR_ALLOC_DELAY_DE
+                  | MMU_L2_WR_ALLOC_COMBINE_DE
+                  | MMU_L2_WR_ALLOC_DE;
+  l2_cache_actlr |= MMU_L2_TAG_RAM_LATENCY;
+  l2_cache_actlr |= MMU_L2_DATA_RAM_LATENCY;
+  early_printk("l2_cache_actlr = %p\n", l2_cache_actlr);
+  __monitor_set_l2_cache_actlr(l2_cache_actlr);
+  // L2 cache is currently in a bad state.
+  // XXX: DO NOT DO ANYTHING COMPLICATED UNTIL IT IS ENABLED!!!
+}
+
+static int non_secure_to_secure(void) {
+  uint32_t cpsr = __get_cpsr();
+  early_printk("cpsr = %p\n", cpsr);
+  __set_cpsr((cpsr & ~0x1f) | 0x16);  // Enter monitor state.
+  early_printk("cpsr = %p\n", __get_cpsr());
+  __set_scr(__get_scr() & ~0x1);      // Unset non-secure bit.
+  __set_cpsr(cpsr);                   // Exit monitor state.
+  return 0;
+}
+
+static int cache_enable(void) {
+  __set_actlr(__get_actlr() & ~MMU_ACTLR_L2_EN);
+  init_l2_cache_actlr();
+  __set_sctlr(__get_sctlr() & ~(MMU_SCTLR_L1_INSTR_EN | MMU_SCTLR_L1_DATA_EN));
+  __set_actlr(__get_actlr() | MMU_ACTLR_L2_EN);
+  early_printk("sctlr = %p\n", __get_sctlr());
+  early_printk("actlr = %p\n", __get_actlr());
+  early_printk("l2_cache_actlr = %p\n", __get_l2_cache_actlr());
+  return 0;
+}
+
 extern notype __text_start;
 extern notype __text_end;
 extern notype __data_start;
@@ -222,6 +279,10 @@ int init_mmu(void) {
     next_alloc_addr = last_used_addr + PTAB_SIZE;
     early_printk("next_alloc_addr = %p\n", next_alloc_addr);
   }
+  // non_secure_to_secure();
+  cache_enable();
+  __flush_tlb();
+  early_printk("TLB flushed.");
 
   alloc_ttab = early_mmu_malloc(sizeof(page_table_t) * TTAB_INDEX_SIZE, TTAB_ADDR_ALIGNMENT) & TTAB_ADDR_MASK;
   for (uint32_t i = 0; i < TTAB_INDEX_SIZE; i++) {

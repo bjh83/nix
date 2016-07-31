@@ -1,5 +1,77 @@
 .text
 
+.globl __set_cpsr
+__set_cpsr:
+  stmfd	sp!, {fp, lr}
+  msr cpsr, r0 
+  ldmfd	sp!, {fp, pc}
+
+.globl __get_cpsr
+__get_cpsr:
+  stmfd	sp!, {fp, lr}
+  mrs r0, cpsr @ Put r0 into the cpsr (Current Program Status Register).
+  ldmfd	sp!, {fp, pc}
+
+.globl __set_scr
+__set_scr:
+  stmfd	sp!, {fp, lr}
+  mcr p15, 0, r0, c1, c1, 0  @ Put r0 into the scr (Secure Configuration Register).
+  ldmfd	sp!, {fp, pc}
+
+.globl __get_scr
+__get_scr:
+  stmfd	sp!, {fp, lr}
+  mrc p15, 0, r0, c1, c1, 0  @ Put the scr (Secure Configuration Register) into r0.
+  ldmfd	sp!, {fp, pc}
+
+.globl __set_sctlr
+__set_sctlr:
+  stmfd	sp!, {fp, lr}
+  mcr p15, 0, r0, c1, c0, 0 @ Put r0 into sctlr (System Control Register).
+  ldmfd	sp!, {fp, pc}
+
+.globl __get_sctlr
+__get_sctlr:
+  stmfd	sp!, {fp, lr}
+  mrc p15, 0, r0, c1, c0, 0 @ Put sctlr (System Control Register) into r0.
+  ldmfd	sp!, {fp, pc}
+
+.globl __set_actlr
+__set_actlr:
+  stmfd	sp!, {fp, lr}
+  mcr p15, 0, r0, c1, c0, 1 @ Put r0 into actlr (Auxilary Control Register).
+  ldmfd	sp!, {fp, pc}
+
+.globl __get_actlr
+__get_actlr:
+  stmfd	sp!, {fp, lr}
+  mrc p15, 0, r0, c1, c0, 1 @ Put actlr (Auxilary Control Register) into r0.
+  ldmfd	sp!, {fp, pc}
+
+.globl __monitor_set_l2_cache_actlr
+__monitor_set_l2_cache_actlr:
+  stmfd	sp!, {fp, lr}
+  mov r12,      #0x100
+  orr r12, r12, #0x002 @ Put 0x102 into r12
+  mcr p15, 0, r1, c7, c5, #6
+  dsb
+  isb
+  dmb
+  smc #1
+  ldmfd	sp!, {fp, pc}
+
+.globl __set_l2_cache_actlr
+__set_l2_cache_actlr:
+  stmfd	sp!, {fp, lr}
+  mcr p15, 1, r0, c9, c0, 2 @ Put r0 into L2 Cache Auxilary Control Register.
+  ldmfd	sp!, {fp, pc}
+
+.globl __get_l2_cache_actlr
+__get_l2_cache_actlr:
+  stmfd	sp!, {fp, lr}
+  mrc p15, 1, r0, c9, c0, 2 @ Put L2 Cache Auxilary Control Register into r0.
+  ldmfd	sp!, {fp, pc}
+
 /*
  * Sets ttbr0 (translation table register 0) register.
  *
@@ -71,6 +143,12 @@ __translate_addr:
 __flush_page:
   stmfd	sp!, {fp, lr}
   mcr p15, 0, r0, c8, c7, 1 @ Request invalidation of virtual address in r0.
+  ldmfd	sp!, {fp, pc}
+
+.globl __flush_tlb
+__flush_tlb:
+  stmfd	sp!, {fp, lr}
+  mcr p15, 0, r1, c8, c7, 0 @ Invalidate entire TLB.
   ldmfd	sp!, {fp, pc}
 
 .globl __disable_irqs

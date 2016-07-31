@@ -70,10 +70,22 @@ static inline void flush_page(virt_addr_t vaddr) {
   __flush_page(vaddr);
 }
 
+extern void __asm_def __set_cpsr(uint32_t new_cpsr);
+extern uint32_t __asm_def __get_cpsr(void);
+extern void __asm_def __set_scr(uint32_t new_scr);
+extern uint32_t __asm_def __get_scr(void);
+extern void __asm_def __set_sctlr(uint32_t new_sctlr);
+extern uint32_t __asm_def __get_sctlr(void);
+extern void __asm_def __set_actlr(uint32_t new_actlr);
+extern uint32_t __asm_def __get_actlr(void);
+extern void __asm_def __monitor_set_l2_cache_actlr(uint32_t new_l2_cache_actlr);
+extern void __asm_def __set_l2_cache_actlr(uint32_t new_l2_cache_actlr);
+extern uint32_t __asm_def __get_l2_cache_actlr(void);
 extern void __asm_def __set_ttbr0(uint32_t new_ttbr0);
 extern phys_addr_t __asm_def __get_ttbr0(void);
 extern void __asm_def __set_ttbcr(uint32_t new_ttbcr);
 extern void __asm_def __set_dacr(uint32_t new_dacr);
+extern void __asm_def __flush_tlb(void);
 extern void __asm_def __disable_irqs(void);
 
 #endif // MEMORY_MMU_H_
